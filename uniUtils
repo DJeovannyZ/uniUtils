@@ -12,7 +12,7 @@ function registerSubject {
     unit="$i Unidad"
     addDirToSubject "$nameSubject" "$unit"
   done
-  addDirToSubject "$nameSubject" "Generalidades"
+  addDirToSubject "$nameSubject" "Generalidades $nameSubject"
 
   for ((i = 1; i < 5; i++)); do
     unit="$i Unidad"
@@ -22,6 +22,7 @@ function registerSubject {
     done
     addDirToUnit "$nameSubject" "$unit" "Examenes"
     addDirToUnit "$nameSubject" "$unit" "Tareas"
+    addDirToUnit "$nameSubject" "$unit" "Generalidades"
   done
   echo "Asignatura "$nameSubject" Registrada"
 }
@@ -191,54 +192,51 @@ function addFiles {
     echo "La función addFiles requiere al menos un argumento."
     return 1
   fi
+
   echo "Seleccione una Asignatura"
   selectDir "$defaultPath"
   dirSelected="$selectedDir"
+
   break_loop=false
   while [[ "$break_loop" == "false" ]]; do
-    dirs=()
-    while IFS= read -r entry; do
-      if [[ -d "$entry" ]]; then
-        if [[ "$entry" != "$dirSelected" && "$entry" != "$dirSelected/." && "$entry" != "$dirSelected/.." ]]; then
-          dirs+=("$entry")
-        fi
-      fi
-    done < <(find "$dirSelected" -maxdepth 1)
-    if [[ ${#dirs[@]} -gt 0 && ${#files[@]} -eq 0 ]]; then
-      selectDir "$dirSelected"
-      dirSelected="$selectedDir"
-    elif [[ ${#dirs[@]} -eq 0 ]]; then
-      echo "No hay directorios en $dirSelected"
+    # Verificar si hay directorios en $dirSelected
+    if [[ $(find "$dirSelected" -mindepth 2 -type d | wc -l) -eq 0 ]]; then
+      mvFiles "$@"
+      break
       break_loop=true
     else
       echo "Seleccione una opción:"
-      select opt in "Buscar otro directorio" "Mover archivos al directorio actual"; do
-        case $opt in
-          "Buscar otro directorio")
-            selectDir "$dirSelected"
-            dirSelected="$selectedDir"
-            break
-            ;;
+      read -p "[1] Buscar otro directorio [2] Mover los archivos al directorio actual | default[1]: " option
 
-          "Mover archivos en el directorio actual")
-          for file in "$@"; do
-            if [ -f "$file" ] || [ -d "$file" ]; then
-              mv "$file" "$dirSelected"
-            else
-              echo "El archivo o directorio $file no existe o no se puede mover."
-            fi
-          done
-            break_loop=true
-            break
-            ;;
-          *)
-            echo "Opción inválida, intente de nuevo."
-            ;;
-        esac
-      done
+      case $option in
+      1)
+        selectDir "$dirSelected"
+        dirSelected="$selectedDir"
+        ;;
+      2)
+        mvFiles "$@"
+        break_loop=true
+        break
+        ;;
+      *)
+        selectDir "$dirSelected"
+        dirSelected="$selectedDir"
+        ;;
+      esac
     fi
   done
+}
 
+function mvFiles {
+  for file in "$@"; do
+    if [ -f "$file" ] || [ -d "$file" ]; then
+      mv "$file" "$dirSelected"
+      nameFile=$(basename "$file")
+      echo -e "Moviendo $nameFile a $dirSelected"
+    else
+      echo "El archivo o directorio $file no existe o no se puede mover."
+    fi
+  done
 }
 
 function selectDir {
@@ -284,6 +282,33 @@ function selectDir {
   fi
 }
 
+function goToDir {
+  echo "Seleccione una Asignatura"
+  selectDir "$defaultPath"
+  dirSelected="$selectedDir"
+  break_loop=false
+  while [[ "$break_loop" == "false" ]]; do
+      echo "Seleccione una opción:"
+
+      read -p "[1] Buscar otro directorio [2] ir a $dirSelected | default[1]: " option
+      case $option in
+      1)
+        selectDir "$dirSelected"
+        dirSelected="$selectedDir"
+        ;;
+      2)
+        cd "$dirSelected"
+        exec zsh
+        break_loop=true
+        break
+        ;;
+      *)
+        selectDir "$dirSelected"
+        dirSelected="$selectedDir"
+        ;;
+    esac
+  done
+}
 
 # Function to set default path
 function setDefaultPath {
@@ -363,11 +388,16 @@ main() {
         registerSubject
         ;;
 
-      #Registrar una nueva asignatura
+      #Abri un Documento
       --openDocuments | -od)
         openDocuments
         ;;
         
+      #Ir a un directorio
+      --goToDir | -gd)
+        goToDir
+        ;;
+
       #Agregar documentos a una semana examenes o tareas
       --addFiles | -af)
         addFiles "${@:2}"
