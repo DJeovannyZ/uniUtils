@@ -4,6 +4,7 @@ defaultPath=$(cat "$HOME/.config/uniUtils/default_path.txt")
 selectedDir=
 nameSelectedDir=
 selectedFiles=()
+sameDir=
 
 function registerSubject {
   read -p "Ingrese el nombre de la Asignatura: " nameSubject
@@ -187,46 +188,6 @@ function selectFiles {
   fi
 }
 
-function addFiles {
-  if [ $# -eq 0 ]; then
-    echo "La función addFiles requiere al menos un argumento."
-    return 1
-  fi
-
-  echo "Seleccione una Asignatura"
-  selectDir "$defaultPath"
-  dirSelected="$selectedDir"
-
-  break_loop=false
-  while [[ "$break_loop" == "false" ]]; do
-    # Verificar si hay directorios en $dirSelected
-    if [[ $(find "$dirSelected" -mindepth 2 -type d | wc -l) -eq 0 ]]; then
-      mvFiles "$@"
-      break
-      break_loop=true
-    else
-      echo "Seleccione una opción:"
-      read -p "[1] Buscar otro directorio [2] Mover los archivos al directorio actual | default[1]: " option
-
-      case $option in
-      1)
-        selectDir "$dirSelected"
-        dirSelected="$selectedDir"
-        ;;
-      2)
-        mvFiles "$@"
-        break_loop=true
-        break
-        ;;
-      *)
-        selectDir "$dirSelected"
-        dirSelected="$selectedDir"
-        ;;
-      esac
-    fi
-  done
-}
-
 function mvFiles {
   for file in "$@"; do
     if [ -f "$file" ] || [ -d "$file" ]; then
@@ -239,44 +200,82 @@ function mvFiles {
   done
 }
 
+function addFiles {
+  if [ $# -eq 0 ]; then
+    echo "La función addFiles requiere al menos un argumento."
+    return 1
+  fi
+
+  echo "Seleccione una Asignatura"
+  selectDir "$defaultPath"
+  dirSelected="$selectedDir"
+  sameDir=false
+  break_loop=false
+  while [[ "$break_loop" == "false" ]]; do
+    # Verificar si hay directorios en $dirSelected
+    if [[ $(find "$dirSelected" -mindepth 1 -type d | wc -l) -eq 0 ]]; then
+      mvFiles "$@"
+      break
+    fi
+    if [[ "$sameDir" == "false" ]]; then
+      selectDir "$dirSelected" 1
+      dirSelected="$selectedDir"
+    else
+      mvFiles "$@"
+      break
+    fi
+  done
+}
+
 function selectDir {
   local path="$1"
   local dirs=("$path"/*)
   local numDirs=0
+  boolean=0
 
+  if [ $# -eq 2 ]; then
+    echo "$numDirs - ${selectedDir##*/}"
+  fi
   for dir in "${dirs[@]}"; do
-    if [[ -d "$dir" ]]; then
+    if [[ -d "$dir" ]] && [[ ! "$dir" =~ \.\.?$ ]]; then
       ((numDirs++))
       echo "$numDirs - ${dir##*/}"
     fi
   done
+
   if ((numDirs == 0)); then
     echo "No hay directorios en $path"
     return 1
   else
-
     while true; do
-      read -p "Seleccione un directorio (1-$numDirs): " dirNum
-      if ((dirNum >= 1 && dirNum <= numDirs)); then
-        local count=0
-        for dir in "${dirs[@]}"; do
-          if [[ -d "$dir" ]]; then
-            ((count++))
-            if ((count == dirNum)); then
-              selectedDir="$dir"
-              break
-            fi
-          fi
-        done
-        if [[ -d "$selectedDir" ]]; then
+      read -p "Seleccione un directorio (0-$numDirs): " dirNum
+      if ((dirNum >= 0 && dirNum <= numDirs)); then
+        if ((dirNum == 0)) && [ $# -eq 2 ]; then
+          selectedDir="$selectedDir"
           nameSelectedDir=$(basename "$selectedDir")
-          # echo $nameSelectedDir
+          sameDir=true
           break
-        else
-          echo "La opción seleccionada no es un directorio válido."
+        elif ((dirNum != 0)); then
+          local count=0
+          for dir in "${dirs[@]}"; do
+            if [[ -d "$dir" ]]; then
+              ((count++))
+              if ((count == dirNum)); then
+                selectedDir="$dir"
+                sameDir=false
+                break
+              fi
+            fi
+          done
+          if [[ -d "$selectedDir" ]]; then
+            nameSelectedDir=$(basename "$selectedDir")
+            break
+          else
+            echo "La opción seleccionada no es un directorio válido."
+          fi
         fi
       else
-        echo "Opción inválida. Introduzca un número entre 1 y $numDirs."
+        echo "Opción inválida. Introduzca un número entre 0 y $numDirs."
       fi
     done
   fi
