@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Define default path where Java projects will be created
-defaultPath=$(cat $HOME/.config/uniUtils/default_path.txt)
+defaultPath=$(cat "$HOME/.config/uniUtils/default_path.txt")
 selectedDir=
 nameSelectedDir=
 selectedFiles=()
@@ -55,67 +54,85 @@ function addDirToUnit {
   fi
 }
 
-function addDocsToSubjectDirs {
-  echo "Seleccione una Asignatura"
-  selectDir "$defaultPath"
-  subject="$selectedDir"
-  echo "Seleccione el Directorio de: "$nameSelectedDir
-  selectDir "$selectedDir"
-  dir="$selectedDir"
-  # Mover cada archivo pasado como argumento a la semana seleccionada
-  for file in "$@"; do
-    if [ -f "$file" ] || [ -d "$file" ]; then
-      mv "$file" "$dir"
-    else
-      echo "El archivo o directorio $file no existe o no se puede mover."
-    fi
-  done
-}
-
 function openDocuments {
   echo "Seleccione una Asignatura"
   selectDir "$defaultPath"
-  subject="$selectedDir"
-  echo "Seleccione la Unidad de: "$nameSelectedDir
-  selectDir "$selectedDir"
-  unit="$selectedDir"
-  echo "Seleccione el Directorio de la "$nameSelectedDir
-  selectDir "$selectedDir"
-  dir="$selectedDir"
-  echo "Eliga los archivos que quiere abrir: "
-  selectFiles "$dir"
+  dirSelected="$selectedDir"
+  break_loop=false
+  while [[ "$break_loop" == "false" ]]; do
+    files=()
+    dirs=()
+    while IFS= read -r entry; do
+      if [[ -d "$entry" ]]; then
+        if [[ "$entry" != "$dirSelected" && "$entry" != "$dirSelected/." && "$entry" != "$dirSelected/.." ]]; then
+          dirs+=("$entry")
+        fi
+      elif [[ -f "$entry" ]]; then
+        files+=("$entry")
+      fi
+    done < <(find "$dirSelected" -maxdepth 1)
+    if [[ ${#files[@]} -gt 0 && ${#dirs[@]} -eq 0 ]]; then
+      selectFiles "$dirSelected"
+      break_loop=true
+    elif [[ ${#dirs[@]} -gt 0 && ${#files[@]} -eq 0 ]]; then
+      selectDir "$dirSelected"
+      dirSelected="$selectedDir"
+    elif [[ ${#files[@]} -eq 0 && ${#dirs[@]} -eq 0 ]]; then
+      echo "No hay archivos ni directorios en $dirSelected"
+      break_loop=true
+    else
+      echo "Seleccione una opción:"
+      select opt in "Buscar otro directorio" "Seleccionar archivos en el directorio actual"; do
+        case $opt in
+          "Buscar otro directorio")
+            selectDir "$dirSelected"
+            dirSelected="$selectedDir"
+            break
+            ;;
 
-declare -A apps=(
-  ["pdf"]="brave"
-  ["pptx"]="brave"
-  ["mkv"]="vlc"
-  ["mp4"]="vlc"
-  ["jpg"]="mirage"
-  ["png"]="mirage"
-  ["jpeg"]="mirage"
-) 
-   
-declare -A file_lists
-   
-for file in "${selectedFiles[@]}"
-do
-  extension="${file##*.}"
-  if [[ -n "${apps[$extension]}" ]]; then
-    file_lists[$extension]+="\"$file\"\n"
-  else
-    echo "No hay aplicación predeterminada para el archivo $file"
-  fi
-done
-   
-for extension in "${!file_lists[@]}"
-do
-  files="${file_lists[$extension]}"
-  if [[ -n "$files" ]]; then
-    echo -e "$files" | xargs -n 1 "${apps[$extension]}" &
-  fi
-done
+          "Seleccionar archivos en el directorio actual")
+            selectFiles "$dirSelected"
+            break_loop=true
+            break
+            ;;
+          *)
+            echo "Opción inválida, intente de nuevo."
+            ;;
+        esac
+      done
+    fi
+  done
 
-  }
+  declare -A apps=(
+    ["pdf"]="brave"
+    ["pptx"]="brave"
+    ["mkv"]="vlc"
+    ["mp4"]="vlc"
+    ["jpg"]="mirage"
+    ["png"]="mirage"
+    ["jpeg"]="mirage"
+  ) 
+   
+  declare -A file_lists
+   
+  for file in "${selectedFiles[@]}"
+  do
+    extension="${file##*.}"
+    if [[ -n "${apps[$extension]}" ]]; then
+      file_lists[$extension]+="\"$file\"\n"
+    else
+      echo "No hay aplicación predeterminada para el archivo $file"
+    fi
+  done
+   
+  for extension in "${!file_lists[@]}"
+  do
+    files="${file_lists[$extension]}"
+    if [[ -n "$files" ]]; then
+      echo -e "$files" | xargs -n 1 "${apps[$extension]}" &
+    fi
+  done
+}
 
 function selectFiles {
   local path="$1"
@@ -169,24 +186,59 @@ function selectFiles {
   fi
 }
 
-function addDocsToUnitDirs {
+function addFiles {
+  if [ $# -eq 0 ]; then
+    echo "La función addFiles requiere al menos un argumento."
+    return 1
+  fi
   echo "Seleccione una Asignatura"
   selectDir "$defaultPath"
-  subject="$selectedDir"
-  echo "Seleccione la Unidad de: "$nameSelectedDir
-  selectDir "$selectedDir"
-  unit="$selectedDir"
-  echo "Seleccione el Directorio de la "$nameSelectedDir
-  selectDir "$selectedDir"
-  dir="$selectedDir"
-  # Mover cada archivo pasado como argumento a la semana seleccionada
-  for file in "$@"; do
-    if [ -f "$file" ] || [ -d "$file" ]; then
-      mv "$file" "$dir"
+  dirSelected="$selectedDir"
+  break_loop=false
+  while [[ "$break_loop" == "false" ]]; do
+    dirs=()
+    while IFS= read -r entry; do
+      if [[ -d "$entry" ]]; then
+        if [[ "$entry" != "$dirSelected" && "$entry" != "$dirSelected/." && "$entry" != "$dirSelected/.." ]]; then
+          dirs+=("$entry")
+        fi
+      fi
+    done < <(find "$dirSelected" -maxdepth 1)
+    if [[ ${#dirs[@]} -gt 0 && ${#files[@]} -eq 0 ]]; then
+      selectDir "$dirSelected"
+      dirSelected="$selectedDir"
+    elif [[ ${#dirs[@]} -eq 0 ]]; then
+      echo "No hay directorios en $dirSelected"
+      break_loop=true
     else
-      echo "El archivo o directorio $file no existe o no se puede mover."
+      echo "Seleccione una opción:"
+      select opt in "Buscar otro directorio" "Mover archivos al directorio actual"; do
+        case $opt in
+          "Buscar otro directorio")
+            selectDir "$dirSelected"
+            dirSelected="$selectedDir"
+            break
+            ;;
+
+          "Mover archivos en el directorio actual")
+          for file in "$@"; do
+            if [ -f "$file" ] || [ -d "$file" ]; then
+              mv "$file" "$dirSelected"
+            else
+              echo "El archivo o directorio $file no existe o no se puede mover."
+            fi
+          done
+            break_loop=true
+            break
+            ;;
+          *)
+            echo "Opción inválida, intente de nuevo."
+            ;;
+        esac
+      done
     fi
   done
+
 }
 
 function selectDir {
@@ -237,7 +289,7 @@ function selectDir {
 function setDefaultPath {
   # Check if all parameters are provided
   if [ "$#" -ne 1 ]; then
-    echo "Error: to setDefaultPath expecify the path of workspace. use darJavaZ --help for more information."
+    echo "Error: to setDefaultPath expecify the path of workspace. use uniUtils --help for more information."
     return 1
   fi
   # Get the absolute path of the directory
@@ -277,6 +329,23 @@ function checkDefaultPath {
   fi
 }
 
+function showhelp {
+  echo "Uso: uniUtils [opción] [argumentos]"
+  echo ""
+  echo "Descripción:"
+  echo "Este script tiene como objetivo facilitar la gestión de archivos para estudiantes universitarios."
+  echo ""
+  echo "Opciones:"
+  echo " registerSubject                Registra una nueva asignatura y crea los directorios para sus unidades y semanas."
+  echo " addFiles                       Mueve documentos a un directorio"
+  echo " openDocuments                  Abre los documentos de un directorio"
+  echo ""
+  echo "Argumentos:"
+  echo " El comando registerSubject no requiere argumentos adicionales."
+  echo " Para el comando addFiles, se deben proporcionar los archivos o directorios a mover, separados por un espacio."
+  echo " Para el comando openDocuments, se deben seleccionar la carpeta y los archivos a abrir"
+}
+
 # Main function to handle script arguments
 main() {
   # Call checkDefaultPath only if not called with setDefaultPath option
@@ -286,7 +355,7 @@ main() {
   clear
   # Check if no arguments are passed
   if [ $# -eq 0 ]; then
-    echo "No arguments passed. Try 'darJavaZ.sh --help' for more information."
+    echo "No arguments passed. Try 'uniUtils.sh --help' for more information."
   fi
     case "$1" in
       #Registrar una nueva asignatura
@@ -300,18 +369,13 @@ main() {
         ;;
         
       #Agregar documentos a una semana examenes o tareas
-      --addDocsToUnitDirs | -adu)
-        addDocsToUnitDirs "${@:2}"
-        ;;
-
-      #Agregar documentos a una unidad o Generalidades
-      --addDocsToSubjectDirs | -ads)
-        addDocsToSubjectDirs "${@:2}"
+      --addFiles | -af)
+        addFiles "${@:2}"
         ;;
 
       # Set default path
       --setDefaultPath | -s)
-        setDefaultPath $2
+        setDefaultPath "$2"
         ;;
 
       # Show help
@@ -321,7 +385,7 @@ main() {
         ;;
 # Invalid option
 *)
-echo "Invalid option. Try 'darJavaZ.sh --help' for more information."
+echo "Invalid option. Try 'uniUtils --help' for more information."
 exit 1
 ;;
 esac
