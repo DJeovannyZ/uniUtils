@@ -16,9 +16,9 @@ function registerSubject {
   addDirToSubject "$nameSubject" "Generalidades $nameSubject"
 
   for ((i = 1; i < 5; i++)); do
-    unit="$i Unidad"
+    unit="Unidad $i"
     for ((j = 1; j < 5; j++)); do
-      week="$j Semana"
+      week="Semana $i"
       addDirToUnit "$nameSubject" "$unit" "$week"
     done
     addDirToUnit "$nameSubject" "$unit" "Examenes"
@@ -83,25 +83,13 @@ function openDocuments {
       echo "No hay archivos ni directorios en $dirSelected"
       break_loop=true
     else
-      echo "Seleccione una opción:"
-      select opt in "Buscar otro directorio" "Seleccionar archivos en el directorio actual"; do
-        case $opt in
-          "Buscar otro directorio")
-            selectDir "$dirSelected"
-            dirSelected="$selectedDir"
-            break
-            ;;
-
-          "Seleccionar archivos en el directorio actual")
-            selectFiles "$dirSelected"
-            break_loop=true
-            break
-            ;;
-          *)
-            echo "Opción inválida, intente de nuevo."
-            ;;
-        esac
-      done
+      if [[ "$sameDir" == "false" ]]; then
+        selectDir "$dirSelected" 1
+        dirSelected="$selectedDir"
+      else
+        selectFiles "$dirSelected"
+        break
+      fi
     fi
   done
 
@@ -231,17 +219,23 @@ function selectDir {
   local path="$1"
   local dirs=("$path"/*)
   local numDirs=0
-  boolean=0
 
   if [ $# -eq 2 ]; then
-    echo "$numDirs - ${selectedDir##*/}"
+    echo "$numDirs - 󱧰 ${selectedDir##*/}"
+    for dir in "${dirs[@]}"; do
+      if [[ -d "$dir" ]] && [[ ! "$dir" =~ \.\.?$ ]]; then
+        ((numDirs++))
+        echo "    ┖$numDirs - ${dir##*/}"
+      fi
+    done
+  else
+    for dir in "${dirs[@]}"; do
+      if [[ -d "$dir" ]] && [[ ! "$dir" =~ \.\.?$ ]]; then
+        ((numDirs++))
+        echo "$numDirs - ${dir##*/}"
+      fi
+    done
   fi
-  for dir in "${dirs[@]}"; do
-    if [[ -d "$dir" ]] && [[ ! "$dir" =~ \.\.?$ ]]; then
-      ((numDirs++))
-      echo "$numDirs - ${dir##*/}"
-    fi
-  done
 
   if ((numDirs == 0)); then
     echo "No hay directorios en $path"
