@@ -1,6 +1,7 @@
 #!/bin/bash
 
 defaultPath=$(cat "$HOME/.config/uniUtils/default_path.txt")
+rclonePath="Universidad"
 selectedDir=
 nameSelectedDir=
 selectedFiles=()
@@ -9,16 +10,18 @@ sameDir=
 function registerSubject {
   read -p "Ingrese el nombre de la Asignatura: " nameSubject
   addSubject "$nameSubject"
-  for ((i = 1; i < 5; i++)); do
-    unit="$i Unidad"
+  read -p "Ingrese el numero de Unidades de $nameSubject: " num
+  numUnits=$((num + 1))
+  for ((i = 1; i < numUnits; i++)); do
+    unit="Unidad $i"
     addDirToSubject "$nameSubject" "$unit"
   done
   addDirToSubject "$nameSubject" "Generalidades $nameSubject"
 
-  for ((i = 1; i < 5; i++)); do
+  for ((i = 1; i < numUnits; i++)); do
     unit="Unidad $i"
     for ((j = 1; j < 5; j++)); do
-      week="Semana $i"
+      week="Semana $j"
       addDirToUnit "$nameSubject" "$unit" "$week"
     done
     addDirToUnit "$nameSubject" "$unit" "Examenes"
@@ -30,15 +33,19 @@ function registerSubject {
 
 function addSubject {
   pathSubject="$defaultPath/$1"
+  rcloneSubject="$rclonePath/$1"
   mkdir -p "$pathSubject"
+  rclone mkdir gdrive:"$rcloneSubject"
 }
 
 function addDirToSubject {
   nameSubject="$1"
   nameDir="$2"
   pathDirToSubject="$defaultPath/$nameSubject"
+  pathDirRcloneToSubject="$rclonePath/$nameSubject"
   if [ -d "$pathDirToSubject" ]; then
     mkdir -p "$pathDirToSubject/$nameDir"
+    rclone mkdir gdrive:"$pathDirRcloneToSubject/$nameDir"
   else
     echo "La asignatura no existe"
   fi
@@ -49,8 +56,10 @@ function addDirToUnit {
   nameUnit="$2"
   nameDir="$3"
   pathDirToUnit="$defaultPath/$nameSubject/$nameUnit"
+  pathDirRcloneToUnit="$rclonePath/$nameSubject/$nameUnit"
   if [ -d "$pathDirToSubject" ]; then
     mkdir -p "$pathDirToUnit/$nameDir"
+    rclone mkdir gdrive:"$pathDirRcloneToUnit/$nameDir"
   else
     echo "La $nameUnit dentro de $nameSubject no existe"
   fi
