@@ -9,26 +9,35 @@ sameDir=
 
 function registerSubject {
   read -p "Ingrese el nombre de la Asignatura: " nameSubject
-  addSubject "$nameSubject"
   read -p "Ingrese el numero de Unidades de $nameSubject: " num
+  read -p "Ingrese el numero de Semanas para cada Unidad de $nameSubject: " num2
+  addSubject "$nameSubject"
+  echo "Directorio para $nameSubject Creado"
   numUnits=$((num + 1))
+  numWeeks=$((num2 + 1))
   for ((i = 1; i < numUnits; i++)); do
     unit="Unidad $i"
     addDirToSubject "$nameSubject" "$unit"
+    echo "Directorio de la Unidad $i Creada para $nameSubject"
   done
   addDirToSubject "$nameSubject" "Generalidades $nameSubject"
+  echo "Directorio Generalidades $nameSubject Creado"
 
-  for ((i = 1; i < numUnits; i++)); do
+  for ((i = 1; i < $numUnits; i++)); do
     unit="Unidad $i"
-    for ((j = 1; j < 5; j++)); do
+    for ((j = 1; j < $numWeeks; j++)); do
       week="Semana $j"
       addDirToUnit "$nameSubject" "$unit" "$week"
+      echo "Directorio para la Semana $j de la Unidad $i creado en $nameSubject"
     done
     addDirToUnit "$nameSubject" "$unit" "Examenes"
+    echo "Directorio de Examenes para la Unidad $i creado en $nameSubject"
     addDirToUnit "$nameSubject" "$unit" "Tareas"
+    echo "Directorio de Tareas para la Unidad $i creado en $nameSubject"
     addDirToUnit "$nameSubject" "$unit" "Generalidades"
+    echo "Directorio de Generalidades para la Unidad $i creado en $nameSubject"
   done
-  echo "Asignatura "$nameSubject" Registrada"
+  echo "Asignatura "$nameSubject" Registrada en $defaultPath y en google Drive: Universidad/"
 }
 
 function addSubject {
@@ -114,10 +123,15 @@ function openDocuments {
    
   declare -A file_lists
    
+  declare -a docsDrive=() # declara un array vacío para almacenar los archivos con extensión .doc, .docx, .xlsx
+
   for file in "${selectedFiles[@]}"
   do
     extension="${file##*.}"
-    if [[ -n "${apps[$extension]}" ]]; then
+    if [[ "$extension" == "doc" || "$extension" == "docx" || "$extension" == "xlsx" ]]; then
+      fileDrive=$(echo "$file" | sed "s|$HOME/||")
+      docsDrive+=("$fileDrive") # agrega el archivo al array de archivos .doc, .docx, .xlsx
+    elif [[ -n "${apps[$extension]}" ]]; then
       file_lists[$extension]+="\"$file\"\n"
     else
       echo "No hay aplicación predeterminada para el archivo $file"
@@ -130,6 +144,21 @@ function openDocuments {
     if [[ -n "$files" ]]; then
       echo -e "$files" | xargs -n 1 "${apps[$extension]}" &
     fi
+  done
+  if [ ${#docsDrive[@]} -gt 0 ]; then
+    openDriveDocuments "${docsDrive[@]}"
+  fi
+}
+
+function openDriveDocuments {
+  local filesDrive=("$@") # obtiene los argumentos como un array
+  for file in "${filesDrive[@]}"; do
+    echo "$file"
+    rclone lsjson gdrive:"$file" > tmp.json
+    # Extraer el identificador del archivo del archivo temporal utilizando jq
+    identificador=$(jq -r '.[0].ID' tmp.json)
+    rm tmp.json
+    brave "https://docs.google.com/spreadsheets/u/2/d/$identificador/edit"
   done
 }
 
@@ -185,21 +214,64 @@ function selectFiles {
   fi
 }
 
-function mvFiles {
+function cpFiles {
+
+  dirDrive=$(echo "$dirSelected" | sed "s|$HOME/||")
   for file in "$@"; do
-    if [ -f "$file" ] || [ -d "$file" ]; then
-      mv "$file" "$dirSelected"
+    if [ -f "$file" ]; then
+      # Obtiene la extensión del archivo
+      ext="${file##*.}"
+
       nameFile=$(basename "$file")
-      echo -e "Moviendo $nameFile a $dirSelected"
+      echo -e "  Copiando $nameFile a $dirSelected"
+      cp "$file" "$dirSelected"
+
+      # Verifica si la extensión es .xlsx, .doc o .docx
+      if [ "$ext" = "xlsx" ] || [ "$ext" = "doc" ] || [ "$ext" = "docx" ]; then
+        echo -e "  Subiendo $nameFile a  en $dirDrive"
+        rclone copy "$file" "gdrive:$dirDrive"
+      fi
+    elif [ -d "$file" ]; then
+      cp "$file" "$dirSelected"
+      nameDir=$(basename "$file")
+      echo -e "Copiando directorio $nameDir a $dirSelected"
     else
       echo "El archivo o directorio $file no existe o no se puede mover."
     fi
   done
 }
 
+# function addFiles {
+#   if [ $# -eq 0 ]; then
+#     echo "La función addFiles requiere al menos un argumento."
+#     return 1
+#   fi
+
+#   echo "Seleccione una Asignatura"
+#   selectDir "$defaultPath"
+#   dirSelected="$selectedDir"
+#   sameDir=false
+#   break_loop=false
+
+#   while [[ "$break_loop" == "false" ]]; do
+#     # Verificar si hay directorios en $dirSelected
+#     if [[ $(find "$dirSelected" -mindepth 1 -type d | wc -l) -eq 0 ]]; then
+#       cpFiles "$@"
+#       break
+#     fi
+#     if [[ "$sameDir" == "false" ]]; then
+#       selectDir "$dirSelected" 1
+#       dirSelected="$selectedDir"
+#     else
+#       cpFiles "$@" #aqui iria la funcion cpFiles o createFile
+#       break
+#     fi
+#   done
+# }
+
 function addFiles {
-  if [ $# -eq 0 ]; then
-    echo "La función addFiles requiere al menos un argumento."
+  if [ $# -lt 1 ]; then  # Verificar que hay al menos dos argumentos (función y directorio)
+    echo "La función addFiles requiere al menos dos argumentos."
     return 1
   fi
 
@@ -208,20 +280,37 @@ function addFiles {
   dirSelected="$selectedDir"
   sameDir=false
   break_loop=false
+
+  # Obtener la función que se va a llamar
+  func="$1"
+  shift
+
   while [[ "$break_loop" == "false" ]]; do
     # Verificar si hay directorios en $dirSelected
     if [[ $(find "$dirSelected" -mindepth 1 -type d | wc -l) -eq 0 ]]; then
-      mvFiles "$@"
+      # Llamar a la función correspondiente
+      case "$func" in
+        cpFiles) cpFiles "$@" ;;
+        createFiles) createFiles ;;
+      esac
       break
     fi
     if [[ "$sameDir" == "false" ]]; then
       selectDir "$dirSelected" 1
       dirSelected="$selectedDir"
     else
-      mvFiles "$@"
+      # Llamar a la función correspondiente
+      case "$func" in
+        cpFiles) cpFiles "$@" ;;
+        createFiles) createFiles ;;
+      esac
       break
     fi
   done
+}
+
+function createFiles {
+    touch "$dirSelected/prueba.txt"
 }
 
 function selectDir {
@@ -234,7 +323,7 @@ function selectDir {
     for dir in "${dirs[@]}"; do
       if [[ -d "$dir" ]] && [[ ! "$dir" =~ \.\.?$ ]]; then
         ((numDirs++))
-        echo "    ┖$numDirs - ${dir##*/}"
+        echo "     󱞪 $numDirs - 󰉋 ${dir##*/}"
       fi
     done
   else
@@ -402,7 +491,11 @@ main() {
 
       #Agregar documentos a una semana examenes o tareas
       --addFiles | -af)
-        addFiles "${@:2}"
+        addFiles cpFiles "${@:2}"
+        ;;
+
+      --createFiles | -cf)
+        addFiles createFiles
         ;;
 
       # Set default path
