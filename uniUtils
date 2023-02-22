@@ -4,6 +4,7 @@ source ./core/dirs/fcSelectDir.sh
 source ./core/dirs/fcGoTodir.sh
 source ./core/documents/fcOpenDocuments.sh
 source ./core/documents/fcCreateDocuments.sh
+source ./core/documents/openDriveDocuments.sh
 source ./core/files/fcAddFiles.sh
 source ./core/files/fcCopyFiles.sh
 source ./core/files/fcSelectFiles.sh

@@ -5,6 +5,7 @@ function openDocuments {
   selectDir "$defaultPath"
   dirSelected="$selectedDir"
   break_loop=false
+  sameDir=false
   while [[ "$break_loop" == "false" ]]; do
     files=()
     dirs=()
@@ -20,20 +21,21 @@ function openDocuments {
     if [[ ${#files[@]} -gt 0 && ${#dirs[@]} -eq 0 ]]; then
       selectFiles "$dirSelected"
       break_loop=true
-    elif [[ ${#dirs[@]} -gt 0 && ${#files[@]} -eq 0 ]]; then
-      selectDir "$dirSelected"
-      dirSelected="$selectedDir"
+    # elif [[ ${#dirs[@]} -gt 0 && ${#files[@]} -eq 0 ]]; then
+    #   echo "Estoy en la segunda validacion"
+    #   selectDir "$dirSelected"
+    #   dirSelected="$selectedDir"
     elif [[ ${#files[@]} -eq 0 && ${#dirs[@]} -eq 0 ]]; then
       echo "No hay archivos ni directorios en $dirSelected"
-      break_loop=true
+      return 1
+      # break_loop=true
+    fi
+    if [[ "$sameDir" == "false" ]]; then
+      selectDir "$dirSelected" 1
+      dirSelected="$selectedDir"
     else
-      if [[ "$sameDir" == "false" ]]; then
-        selectDir "$dirSelected" 1
-        dirSelected="$selectedDir"
-      else
-        selectFiles "$dirSelected"
-        break
-      fi
+      selectFiles "$dirSelected"
+      break
     fi
   done
 
@@ -75,16 +77,3 @@ function openDocuments {
     openDriveDocuments "${docsDrive[@]}"
   fi
 }
-
-function openDriveDocuments {
-  local filesDrive=("$@") # obtiene los argumentos como un array
-  for file in "${filesDrive[@]}"; do
-    echo "$file"
-    rclone lsjson gdrive:"$file" > tmp.json
-    # Extraer el identificador del archivo del archivo temporal utilizando jq
-    identificador=$(jq -r '.[0].ID' tmp.json)
-    rm tmp.json
-    brave "https://docs.google.com/spreadsheets/u/2/d/$identificador/edit"
-  done
-}
-
