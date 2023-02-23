@@ -1,9 +1,18 @@
 #!/bin/bash
 
 function cpFiles {
+    echo "Seleccione los archivos usando espacio y luego Enter"
+    sleep 1
+    path=$(pwd)
+    selectFiles $path
+    echo "Seleccione el directorio de destino"
+    sleep 1
+    selectDir
 
   dirDrive=$(echo "$selectedDir" | sed "s|$HOME/||")
-  for file in "$@"; do
+
+  for file in "${selectedFiles[@]}"
+  do
     if [ -f "$file" ]; then
       # Obtiene la extensión del archivo
       ext="${file##*.}"

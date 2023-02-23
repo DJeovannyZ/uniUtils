@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function selectFiles {
-    ranger $defaultPath --choosefiles=outfiles
+    ranger $1 --choosefiles=outfiles
     files=$(cat outfiles)
     i=0
     while read -r line; do

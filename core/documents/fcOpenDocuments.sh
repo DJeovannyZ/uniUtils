@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function openDocuments {
-  selectFiles
+  selectFiles $defaultPath
   declare -A apps=(
     ["pdf"]="brave"
     ["pptx"]="brave"
