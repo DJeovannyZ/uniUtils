@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function goToDir {
-    selectedDir
+    selectDir
     cd "$selectedDir"
     exec zsh
 }
