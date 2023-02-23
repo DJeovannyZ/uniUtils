@@ -8,8 +8,11 @@ function openDriveDocuments {
     extension="${file##*.}"
     if [[ "$extension" == "doc" || "$extension" == "docx" ]]; then
     brave "https://docs.google.com/document/u/2/d/$identificador/edit"
-    elif [[ "$extension" == "xlsx" ]]; then
+    filename=$(basename "$file")
+    echo "Abriendo $filename en brave"
     brave "https://docs.google.com/spreadsheets/u/2/d/$identificador/edit"
+    filename=$(basename "$file")
+    echo "Abriendo $filename en brave"
     fi
   done
 }
