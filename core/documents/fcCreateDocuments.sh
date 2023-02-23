@@ -1,6 +1,6 @@
 #!/bin/bash
 function createFiles {
-    selectedDir
+    selectDir
     echo "Seleccione el tipo de archivo: "
     read -p "[1]Documento de Word [2]Hoja de calculo Excel: Default[1] " fileType
     read -p "Ingrese el nombre del archivo: " nameFile

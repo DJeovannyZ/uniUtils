@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 function pushFiles {
-  selectFiles $defaultPath
+  selectFiles "$defaultPath"
   for file in "${selectedFiles[@]}"
   do
     extension="${file##*.}"
@@ -19,7 +19,7 @@ function pushFiles {
 }
 
 function pullFiles {
-  selectFiles $defaultPath
+  selectFiles "$defaultPath"
   for file in "${selectedFiles[@]}"
   do
     extension="${file##*.}"
@@ -36,7 +36,7 @@ function pullFiles {
 }
 
 function deleteFiles {
-  selectFiles $defaultPath
+  selectFiles "$defaultPath"
   for file in "${selectedFiles[@]}"
   do
     extension="${file##*.}"
