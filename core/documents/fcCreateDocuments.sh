@@ -8,11 +8,14 @@ function createFiles {
     declare -a docsDrive=() # declara un array vacío para almacenar los archivos con extensión .doc, .docx, .xlsx
     case "$fileType" in
         1) 
-            cp "$HOME/.config/uniUtils/DocWord.docx" "$selectedDir"
+            dirSubject="$(echo "$selectedDir" | sed -E 's/^(.*Ciclo 3\/[^/]+)\/.*/\1/')"
+            nameSubject="$(basename "$dirSubject")"
+            portadaPath="$dirSubject/Generalidades $nameSubject/Portada.docx"
+            cp "$portadaPath" "$selectedDir"
             filePath="$selectedDir/$nameFile.docx"
-            mv "$selectedDir/DocWord.docx" "$filePath"
+            mv "$selectedDir/Portada.docx" "$filePath"
+            echo " Subiendo $filePath a google drive"
             rclone copy "$filePath" "gdrive:$dirDrive" -P
-            echo "Archivo $nameFile.docx creado"
             docsDrive+=("$dirDrive/$nameFile.docx")
             openDriveDocuments "${docsDrive[@]}"
         ;;
@@ -20,8 +23,8 @@ function createFiles {
             cp "$HOME/.config/uniUtils/DocExcel.xlsx" "$selectedDir"
             filePath="$selectedDir/$nameFile.xlsx"
             mv "$selectedDir/DocExcel.xlsx" "$filePath"
+            echo " Subiendo $filePath a google drive"
             rclone copy "$filePath" "gdrive:$dirDrive" -P
-            echo "Archivo $nameFile.xlsx creado"
             docsDrive+=("$dirDrive/$nameFile.xlsx")
             openDriveDocuments "${docsDrive[@]}"
         ;;
@@ -29,17 +32,20 @@ function createFiles {
             cp "$HOME/.config/uniUtils/DocPPT.pptx" "$selectedDir"
             filePath="$selectedDir/$nameFile.pptx"
             mv "$selectedDir/DocPPT.pptx" "$filePath"
+            echo " Subiendo $filePath a google drive"
             rclone copy "$filePath" "gdrive:$dirDrive" -P
-            echo "Archivo $nameFile.pptx creado"
             docsDrive+=("$dirDrive/$nameFile.pptx")
             openDriveDocuments "${docsDrive[@]}"
         ;;
         *) 
-            cp "$HOME/.config/uniUtils/DocWord.docx" "$selectedDir"
+            dirSubject="$(echo "$selectedDir" | sed -E 's/^(.*Ciclo 3\/[^/]+)\/.*/\1/')"
+            nameSubject="$(basename "$dirSubject")"
+            portadaPath="$dirSubject/Generalidades $nameSubject/Portada.docx"
+            cp "$portadaPath" "$selectedDir"
             filePath="$selectedDir/$nameFile.docx"
-            mv "$selectedDir/DocWord.docx" "$filePath"
+            mv "$selectedDir/Portada.docx" "$filePath"
+            echo " Subiendo $filePath a google drive"
             rclone copy "$filePath" "gdrive:$dirDrive" -P
-            echo "Archivo $nameFile.docx creado"
             docsDrive+=("$dirDrive/$nameFile.docx")
             openDriveDocuments "${docsDrive[@]}"
         ;;

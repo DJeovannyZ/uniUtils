@@ -21,7 +21,7 @@ function cpFiles {
               echo "convirtiendo $file a  pdf"
               libreoffice --convert-to pdf --outdir "$selectedDir" "$file" 
               rm -r "$file"
-              echo -e "  Subiendo $selectedDir/$nameFileNoExtension.pdf a  en $dirDrive"
+              echo -e " Subiendo $selectedDir/$nameFileNoExtension.pdf a  en $dirDrive"
               rclone copy "$selectedDir/$nameFileNoExtension.pdf" "gdrive:$dirDrive" -P
               continue
             elif [ "$1" = "--no-convert" ] ; then
