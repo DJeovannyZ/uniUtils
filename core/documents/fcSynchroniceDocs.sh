@@ -24,3 +24,4 @@ function deleteFiles {
       echo "Borrando $fileName de local"
   done
 }
+
