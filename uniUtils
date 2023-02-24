@@ -52,6 +52,16 @@ main() {
         pullFiles
         ;;
 
+      #mandar nueva version de archivos a drive
+      --updateFilesToDrive | -ufd)
+        updateFilesToDrive
+        ;;
+
+      #traer nueva version de archivos de drive
+      --updateFilesToLocal | -ufl)
+        updateFilesToLocal        
+        ;;
+
       #eliminar documentos de local y google drive
       --deleteFiles | -df)
         deleteFiles
