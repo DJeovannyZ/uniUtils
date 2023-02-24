@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 function openDriveDocuments {
   local filesDrive=("$@") # obtiene los argumentos como un array
   for file in "${filesDrive[@]}"; do
@@ -12,6 +14,10 @@ function openDriveDocuments {
     echo "Abriendo $filename en brave"
     elif [[ "$extension" == "xlsx"  ]]; then
     brave "https://docs.google.com/spreadsheets/u/2/d/$identificador/edit"
+    filename=$(basename "$file")
+    echo "Abriendo $filename en brave"
+    elif [[ "$extension" == "pptx"  ]]; then
+    brave "https://docs.google.com/presentation/u/2/d/$identificador/edit"
     filename=$(basename "$file")
     echo "Abriendo $filename en brave"
     fi

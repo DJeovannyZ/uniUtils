@@ -2,6 +2,7 @@
 
 function selectFiles {
     ranger "$1" --choosefiles=outfiles
+  if [ -e outfiles ]; then
     files=$(cat outfiles)
     i=0
     while read -r line; do
@@ -9,5 +10,6 @@ function selectFiles {
         ((i++))
     done <<< "$files"
     rm outfiles
+  fi
 }
 

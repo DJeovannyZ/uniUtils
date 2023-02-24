@@ -26,7 +26,7 @@ main() {
   if [ "$1" != "--setDefaultPath" ] && [ "$1" != "-s" ]; then
     checkDefaultPath
   fi
-  # clear
+  clear
   # Check if no arguments are passed
   if [ $# -eq 0 ]; then
     echo "No arguments passed. Try 'uniUtils.sh --help' for more information."
@@ -64,7 +64,7 @@ main() {
 
       #Agregar documentos a una semana examenes o tareas
       --addFiles | -af)
-        cpFiles 
+      cpFiles
         ;;
 
       --createFiles | -cf)

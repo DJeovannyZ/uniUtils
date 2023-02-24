@@ -57,6 +57,11 @@ function checkDefaultPath {
       cp "DocExcel.xlsx" "$HOME/.config/uniUtils/"
   fi
 
+  if [ ! -f "$HOME/.config/uniUtils/DocPPT.pptx" ]; then
+      echo "Copiando archivo DocPPT.pptx"
+      cp "DocPPT.pptx" "$HOME/.config/uniUtils/"
+  fi
+
   # Check if default path file has a path set
   if [ ! -s "$HOME/.config/uniUtils/default_path.txt" ]; then
     echo "Default path file is empty. Set default path using 'uniUtils --setDefaultPath <path>'"

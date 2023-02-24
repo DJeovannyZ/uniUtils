@@ -19,7 +19,7 @@ function openDocuments {
   for file in "${selectedFiles[@]}"
   do
     extension="${file##*.}"
-    if [[ "$extension" == "doc" || "$extension" == "docx" || "$extension" == "xlsx" ]]; then
+    if [[ "$extension" == "doc" || "$extension" == "docx" || "$extension" == "xlsx" || "$extension" == "pptx" ]]; then
       fileDrive=$(echo "$file" | sed "s|$HOME/||")
       docsDrive+=("$fileDrive") # agrega el archivo al array de archivos .doc, .docx, .xlsx
     elif [[ -n "${apps[$extension]}" ]]; then

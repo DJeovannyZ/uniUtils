@@ -37,7 +37,7 @@ function addSubject {
   pathSubject="$defaultPath/$1"
   rcloneSubject="$rclonePath/$1"
   mkdir -p "$pathSubject"
-  # rclone mkdir gdrive:"$rcloneSubject"
+  rclone mkdir gdrive:"$rcloneSubject"
 }
 
 function addDirToSubject {
@@ -47,7 +47,7 @@ function addDirToSubject {
   pathDirRcloneToSubject="$rclonePath/$nameSubject"
   if [ -d "$pathDirToSubject" ]; then
     mkdir -p "$pathDirToSubject/$nameDir"
-    # rclone mkdir gdrive:"$pathDirRcloneToSubject/$nameDir"
+    rclone mkdir gdrive:"$pathDirRcloneToSubject/$nameDir"
   else
     echo "La asignatura no existe"
   fi
@@ -61,7 +61,7 @@ function addDirToUnit {
   pathDirRcloneToUnit="$rclonePath/$nameSubject/$nameUnit"
   if [ -d "$pathDirToSubject" ]; then
     mkdir -p "$pathDirToUnit/$nameDir"
-    # rclone mkdir gdrive:"$pathDirRcloneToUnit/$nameDir"
+    rclone mkdir gdrive:"$pathDirRcloneToUnit/$nameDir"
   else
     echo "La $nameUnit dentro de $nameSubject no existe"
   fi
