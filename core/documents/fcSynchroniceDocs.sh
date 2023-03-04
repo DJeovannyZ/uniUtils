@@ -3,13 +3,13 @@
 function pushFiles {
   dirDrive=$(echo "$defaultPath" | sed "s|$HOME/||")
   echo " Subiendo archivos de $defaultPath a Google Drive"
-  rclone sync "$defaultPath" gdrive:"$dirDrive" -P
+  rclone sync "$defaultPath" gdrive:"$dirDrive" --create-empty-src-dirs -P
 }
 
 function pullFiles {
   dirDrive=$(echo "$defaultPath" | sed "s|$HOME/||")
   echo " Descargando archivos nuevos de Google Drive a $defaultPath"
-  rclone sync gdrive:"$dirDrive" "$defaultPath" -P
+  rclone sync gdrive:"$dirDrive" "$defaultPath" --create-empty-src-dirs -P
 }
 
 function deleteFiles {

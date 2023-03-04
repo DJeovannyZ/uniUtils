@@ -2,7 +2,7 @@
 
 function cpFiles {
 
-    selectFiles "$HOME/Descargas"
+    selectFiles "$HOME/Downloads"
   if ! [ -z "${selectedFiles[@]}" ]; then
     selectDir
     dirDrive=$(echo "$selectedDir" | sed "s|$HOME/||")
