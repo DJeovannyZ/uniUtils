@@ -4,7 +4,7 @@ function openDriveDocuments {
   local filesDrive=("$@") # obtiene los argumentos como un array
   for file in "${filesDrive[@]}"; do
     filename=$(basename "$file")
-    echo "Abriendo $filename en brave"
+    echo "Abriendo $file en brave"
     rclone lsjson gdrive:"$file" > tmp.json
     # Extraer el identificador del archivo del archivo temporal utilizando jq
     identificador=$(jq -r '.[0].ID' tmp.json)

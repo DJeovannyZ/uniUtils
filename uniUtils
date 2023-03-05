@@ -29,7 +29,7 @@ main() {
   clear
   # Check if no arguments are passed
   if [ $# -eq 0 ]; then
-    echo "No arguments passed. Try 'uniUtils.sh --help' for more information."
+      showHelp
   fi
     case "$1" in
       #Registrar una nueva asignatura
@@ -37,27 +37,27 @@ main() {
         registerSubject
         ;;
 
-      #Abri un Documento
+      #Abrir uno o varios documentos
       --openDocuments | -od)
         openDocuments
         ;;
         
-      #enviar documentos actualizados a google drive
+      #sincronizar carpeta local con google drive
       --pushFiles | -phf)
         pushFiles
         ;;
 
-      #traer documentos actualizados de google drive
+      #sincronizar google drive con carpeta local
       --pullFiles | -plf)
         pullFiles
         ;;
 
-      #mandar nueva version de archivos a drive
+      #mandar nueva version de archivos a google drive
       --updateFilesToDrive | -ufd)
         updateFilesToDrive
         ;;
 
-      #traer nueva version de archivos de drive
+      #traer nueva version de archivos de google drive
       --updateFilesToLocal | -ufl)
         updateFilesToLocal        
         ;;
@@ -72,21 +72,22 @@ main() {
         goToDir
         ;;
 
-      #Agregar documentos a una semana examenes o tareas
+      #Agregar documentos a una asignatura
       --addFiles | -af)
       cpFiles
         ;;
 
+      #Crear documentos .docx .xlsx .pptx en una asignatura
       --createFiles | -cf)
         createFiles
         ;;
 
-      # Set default path
+      # Establecer ruta por defecto donde se registraran las asignaturas
       --setDefaultPath | -s)
         setDefaultPath "$2"
         ;;
 
-      # Show help
+      # Muestra la ayuda
       --help | -h)
         showHelp
         exit 0
